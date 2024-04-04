@@ -1,0 +1,28 @@
+정적 라우팅
+ip route [목적지.0] [서브넷] [직접연결된 1or2]
+
+동적 라우팅
+route rip 
+v 2
+net [직접연결된주소.0]
+//show ip brief해서 나오는거 다 해도 됨
+
+dhcp
+ip dhcp pool [이름]
+net [네트워크주소][서브넷]
+default-router [게이트웨이]
+ex
+ip dhcp excluded [제외할 주소]
+
+ACL
+(제외할때)
+access-list [번호] deny [ip 주소 또는 대역] [와일드카드 마스크]
+(포함할때)
+access-list [번호] permit [ip 주소 또는 대역] [와일드카드 마스크]
+(나머지는 제외할때)
+access-list [번호] permit any
+(나머지는 허락할때)
+access-list [번호] permit any
+(적용)
+int [가까운곳]
+ip access-group [번호] [in/out]

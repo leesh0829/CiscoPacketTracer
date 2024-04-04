@@ -1,0 +1,112 @@
+오전 9:02 2023-12-180R1> : 일반 사용자
+R1# : 관리자 모드
+config# : 전역설정모드
+라우터에서 다른곳으로 도메인 됬을 때: ctrl + shift + 6
+
+0. 이름 설정
+	hostname (이름)
+
+1.기기 ip, 서브넷, 게이트웨이 설정(dhcp제외)
+
+2.스위치 vlan ip주소 설정
+	en
+	conf t
+	int vlan (vlan 숫자)
+	ip add (ip) (서브넷)
+	ex
+	ip de (게이트웨이)
+
+3.스위치 vlan 설정
+	vlan (vlan 숫자)
+	name (이름)
+
+4.포트에 vlan 설정
+	int f0/(포트)			*이어져 있는 여러 포트가 같은 vlan인 경우 int f0/(포트) - (마지막 포트)
+	sw m acc
+	sw acc vl (vlan 숫자)		*다른 vlan에 있는 기기(포트)는 연결하지 않기 그 기기에 맞는 vlan으로 연결
+
+5.vlan(스위치 trunk설정)
+	int f0/(포트)
+	sw m tr
+
+5.서브 인터페이스 생성(라우터)
+	en
+	conf t
+	int f0/(라우터에 연결되있는 포트)
+	no sh
+	int f0/(라우터에 연결되있는 포트).(vlan)
+	encapsulation dot10 (vlan)
+	ip add (vlan의 게이트웨이) (서브넷 마스크)
+
+6.DHCP(라우터)
+	ip dhcp pool (이름)
+	net (네트워크 주소) (서브넷)
+	default-router (게이트 주소)
+	ex
+	ip dhcp excluded-Address (제외할 ip 주소)
+
+7.정적
+	ip route (연결할려는 네트워크 주소) (서브넷) (직접 연결된 목적지 라우터 쪽 인터페이스 주소)
+
+8.동적
+	route rip
+	v 2
+	network (네트워크 주소[라우터가 가지고 있는 네트워크 대역])
+	*do show ip int brief (에서 포트에 연결되있는 ip를 위 명령어에 쓰면 됨)
+
+9.OSPF
+	route ospf (process-id [1~65535])
+	router-id (ip주소)
+	network (인터페이스 ip주소/네트워크 주소) (와일드 카드 마스크/서브넷 주소 와일드 카드) area (넘버[area id])
+
+10.default 라우팅
+	ip route 0.0.0.0 0.0.0.0 (건너편 라우터의 ip주소)
+
+11.ACL Standard (수행)
+	access-list (access-list-number[1~99]) (permit[허용]/deny[거부]) (출발지 네트워크 주소/any[모든 주소]) (와일드 마스크[any일 때 적지 않음])
+	int f0/(연결한 포트)
+	ip access-group (access-list-number) (in/out[기본값은 out])
+	show access-list
+
+12.ACL Extended
+	access-list (access-list-number) (permit[허용]/deny[거부]) (프로토콜) (출발지 주소 와일드마스크[Any는 모두 적용])  (목적지 와일드 마스크) (포트 이름/넘버[직접 지어내는 것])
+	int f0/(연결할 포트)
+	ip access-list (access-list-number) (in/out[기본값은 out])
+
+13.ACL Named
+	ip access-list (standard/extended) (이름)
+	(permit/deny) (출발지 네트워크 주소/any[모든 주소]) (와일드 마스크)[standard일 때]
+	(permit/deny) (프로토콜) (출발지 주소 와일드 마스크) (목적지 와일드 마스크) [extended일 때]
+	exit
+
+14.NAT 정적 (static 고정)
+	ip nat inside source static (사설[개인,local] ip) (공인[공용,global] ip)
+	int f0/0[들어갈 스위치나 장치] (내부 랜)
+	ip nat inside
+	int s0/0/0[빠져나온 라우터]
+	ip nat outside
+
+15.NAT 동적 (dynamic) (수행)
+	ip nat pool (pool 이름) (공인[공용,global] 시작 주소) (공인 ip 끝주소) netmask (서브넷마스크)
+	ip nat inside source list (ACL 번호) pool (pool 이름)
+	access-list (ACL s번호) permit/deny (ip 주소/network주소)
+	int f0/0[들어갈 스위치나 장치]
+	ip nat inside
+	int s0/0/0[빠져나올 라우터]
+	ip nat outside
+
+16.배너(라우터)
+	banner motd (문자)[배너메세지](문자) 		*문자는 서로 같아야함 배너 메세지 구분용*
+
+17.비밀번호(라우터)
+	관리자 모드: 	enable password/secret (비밀번호) 
+	(privileged mode)	*service password-encryption (모든 암호를 암호화 시키는 명령어)
+
+	콘솔 접속:	line console 0
+			login local
+			ex
+			user (유저이름) password (비밀번호)
+
+	텔넷 접속:	line vty 0 4
+			password (비밀번호)
+			login
